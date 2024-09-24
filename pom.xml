@@ -68,13 +68,6 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Springfox Swagger for API documentation -->
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-boot-starter</artifactId>
-			<version>3.0.0</version>
-		</dependency>
-
 		<!-- Devtools for hot reloading during development (optional) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -97,11 +90,10 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Springdoc OpenAPI for Swagger documentation -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.2.0</version>
+			<version>2.2.0</version> <!-- En son kararlı sürümü kullanın -->
 		</dependency>
 
 	</dependencies>

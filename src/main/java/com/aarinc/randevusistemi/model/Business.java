@@ -7,6 +7,7 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
+@Table(name = "businesses")  // İsteğe bağlı, tablo adını özelleştirmek için
 @Getter
 @Setter
 public class Business {
@@ -15,15 +16,19 @@ public class Business {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
     private String address;
+
     private String contactInfo;
 
-    @OneToMany(mappedBy = "business")
+    @OneToMany(mappedBy = "business", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<User> users;
 
-    @OneToMany(mappedBy = "business")
+    @OneToMany(mappedBy = "business", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments;
 
-    // Getter ve Setter
+    // Getter ve Setter'lar Lombok tarafından otomatik oluşturulur
 }
