@@ -1,37 +1,75 @@
 package com.aarinc.randevusistemi.service;
 
-import com.aarinc.randevusistemi.exception.ResourceNotFoundException;
+import com.aarinc.randevusistemi.dto.AppointmentDTO;
+import com.aarinc.randevusistemi.exception.BusinessNotFoundException;
+import com.aarinc.randevusistemi.exception.UserNotFoundException;
 import com.aarinc.randevusistemi.model.Appointment;
 import com.aarinc.randevusistemi.model.Business;
+import com.aarinc.randevusistemi.model.User;
 import com.aarinc.randevusistemi.repository.AppointmentRepository;
+import com.aarinc.randevusistemi.repository.BusinessRepository;
+import com.aarinc.randevusistemi.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
-    private final EmailService emailService;
+    private final UserRepository userRepository;
+    private final BusinessRepository businessRepository;
 
-    public AppointmentService(AppointmentRepository appointmentRepository, EmailService emailService) {
-        this.appointmentRepository = appointmentRepository;
-        this.emailService = emailService;
+    // Tüm randevuları alır ve DTO'ya çevirir
+    public List<AppointmentDTO> getAllAppointments() {
+        return appointmentRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public void saveAppointment(Appointment appointment) {
-        appointmentRepository.save(appointment);
-        emailService.sendAppointmentCreatedEmail(appointment.getUser(), appointment.getBusiness(), appointment);
+    // Yeni bir randevu oluşturur
+    public AppointmentDTO createAppointment(AppointmentDTO appointmentDTO) {
+        Appointment appointment = convertToEntity(appointmentDTO);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        return convertToDTO(savedAppointment);
     }
 
+    // Randevuyu onaylar
     public void approveAppointment(Long id) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Randevu bulunamadı! ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Randevu bulunamadı"));
         appointment.setApproved(true);
         appointmentRepository.save(appointment);
-        emailService.sendAppointmentApprovedEmail(appointment.getUser(), appointment.getBusiness(), appointment);
     }
 
-    public List<Appointment> getAppointmentsForBusiness(Business business) {
-        return appointmentRepository.findByBusiness(business);
+    // DTO'yu Entity'ye çevirir
+    private Appointment convertToEntity(AppointmentDTO appointmentDTO) {
+        Appointment appointment = new Appointment();
+        appointment.setDate(appointmentDTO.getDate());
+        appointment.setApproved(appointmentDTO.isApproved());
+
+        // Kullanıcı ve İşletmeyi veritabanından al
+        User user = userRepository.findById(appointmentDTO.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("Kullanıcı bulunamadı: " + appointmentDTO.getUserId()));
+        Business business = businessRepository.findById(appointmentDTO.getBusinessId())
+                .orElseThrow(() -> new BusinessNotFoundException("İşletme bulunamadı: " + appointmentDTO.getBusinessId()));
+
+        appointment.setUser(user);
+        appointment.setBusiness(business);
+        return appointment;
+    }
+
+    // Entity'yi DTO'ya çevirir
+    private AppointmentDTO convertToDTO(Appointment appointment) {
+        return new AppointmentDTO(
+                appointment.getId(),
+                appointment.getDate(),
+                appointment.isApproved(),
+                appointment.getUser().getId(),
+                appointment.getBusiness().getId()
+        );
     }
 }
